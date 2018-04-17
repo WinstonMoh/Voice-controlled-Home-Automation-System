@@ -14,7 +14,7 @@
 //_______________________________________________________________________________________________________________
 
 // Set up LCD KEYPAD SHIELD
-
+#include <Regexp.h>
 #include <LiquidCrystal.h>
 #include <Wire.h>
 // select the pins used on the LCD panel
@@ -57,17 +57,6 @@ DS3231  rtc(SDA, SCL);  // SDA - A4 and SCL - A5 on Arduino Uno.
 
 //______________________________________________________________________________________________________________
 
-//Set commands to be recognized by the Arduino Voice Recognition Shield
-String redOn = "turn red light on";
-String redOff = "turn red light off";
-String greenOn = "turn green light on";
-String greenOff = "turn green light off";
-String bothOn = "turn both lights on";
-String bothOff = "turn both lights off";
-String temperature = "show me temperature";
-String time1 = "what is the time";
-String time2 = "what's the time";
-
 //Set the lamp to pin 13 - Can be changed later.
 // connect bent(long end) end of LED to pin D13 and straight end to GND.
 int red = 13;
@@ -78,7 +67,7 @@ int green = 12;
 
 void setup() {
   
-   //Serial.begin(9600);  //Start the serial connection with the computer
+   Serial.begin(115200);  //Start the serial connection with the computer
                        //to view the result open the serial monitor 
    // put your setup code here, to run once:
    rtc.begin();                    // start rtc module.
@@ -197,47 +186,55 @@ void newCommand(String command){
     //print last command received
     lcd.print(str);
     
+    MatchState ms;      // Create match state instance.
+    ms.Target (str);    // What to search.
     //Compare the last command received by the Arduino Voice Recognition Shield with the command "ON"
-    if(redOn.equals(str))
+    if(ms.Match("on", 0) == REGEXP_MATCHED)
     {
       //Then turn the light on
-      digitalWrite(red,HIGH);
+      if (ms.Match("red", 0) == REGEXP_MATCHED && !(ms.Match("both", 0) == REGEXP_MATCHED))
+      {
+        digitalWrite(red, HIGH);
+      }
+      else if(ms.Match("green", 0) == REGEXP_MATCED && !(ms.Match("both", 0) == REGEXP_MATCHED))
+      {
+        digitalWrite(green, HIGH);
+      }
     }
+    
     //Compare the last command received by the Arduino Voice Recognition Shield with the command "OFF"
-    else if(redOff.equals(str))
+    else if(ms.Match("off", 0) == REGEXP_MATCHED)
     {
-      //Then turn the light off
-      digitalWrite(red,LOW);
-    }
-    //Compare the last command received by the Arduino Voice Recognition Shield with the command "ON"
-    else if(greenOn.equals(str))
-    {
-      //Then turn the light off
-      digitalWrite(green,HIGH);
-    }
-    //Compare the last command received by the Arduino Voice Recognition Shield with the command "OFF"
-    else if(greenOff.equals(str))
-    {
-      //Then turn the light off
-      digitalWrite(green,LOW);
+      //Then turn the light on
+      if (ms.Match("red", 0) == REGEXP_MATCHED)
+      {
+        digitalWrite(red, LOW);
+      }
+      else if(ms.Match("green", 0) == REGEXP_MATCED)
+      {
+        digitalWrite(green, LOW);
+      }
     }    
-    // Turn both lights on
-     else if(bothOn.equals(str))
+    
+    // Turn both lights ON/OFF
+    else if(ms.Match("both", 0) == REGEXP_MATCHED)
     {
-      //Then turn the lights on
-      digitalWrite(green,HIGH);
-      digitalWrite(red,HIGH);
+      if (ms.Match("on", 0) == REGEXP_MATCHED)
+      {
+        //Then turn the lights on
+        digitalWrite(green, HIGH);
+        digitalWrite(red, HIGH);
+      }
+      else if(ms.Match("off", 0) == REGEXP_MATCHED)
+      {
+        //Then turn the lights on
+        digitalWrite(green, LOW);
+        digitalWrite(red, LOW);        
+      }
     }    
-     // Turn both lights off
-     else if(bothOff.equals(str))
-    {
-      //Then turn the lights off
-      digitalWrite(green,LOW);
-      digitalWrite(red,LOW);
-    }  
     
     // Commands for Temperature.
-    else if (temperature.equals(str))
+    else if (ms.Match("temperature", 0) == REGEXP_MATCHED)
     {
      //getting the voltage reading from the temperature sensor
      int reading = analogRead(sensorPin);  
@@ -267,7 +264,7 @@ void newCommand(String command){
     }
     
     // Display time for 10 seconds.
-    else if (time1.equals(str) || time2.equals(str))
+    else if (ms.Match("time", 0) == REGEXP_MATCHED)
     {
      // Print out time from rtc
      for (int i=0; i<10; i++)  // run for 10 seconds.
