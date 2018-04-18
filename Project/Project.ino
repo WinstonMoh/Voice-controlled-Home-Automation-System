@@ -14,7 +14,6 @@
 //_______________________________________________________________________________________________________________
 
 // Set up LCD KEYPAD SHIELD
-#include <Regexp.h>
 #include <LiquidCrystal.h>
 #include <Wire.h>
 // select the pins used on the LCD panel
@@ -47,8 +46,10 @@ int sensorPin = 1; //the analog pin the TMP36's Vout (sense) pin is connected to
                         //500 mV offset to allow for negative temperatures
                         //Use pin A1 since pin A0 is conected to buttons on LCD Keypad Shield.
 
+// Regular Expressions library.
+#include <Regexp.h>
 
-//Including 1Sheeld library
+//Including 1Sheeld library.
 #include <OneSheeld.h>
 
 // Include RTC Clock library.
@@ -67,7 +68,7 @@ int green = 12;
 
 void setup() {
   
-   Serial.begin(115200);  //Start the serial connection with the computer
+   //Serial.begin(115200);  //Start the serial connection with the computer
                        //to view the result open the serial monitor 
    // put your setup code here, to run once:
    rtc.begin();                    // start rtc module.
@@ -189,7 +190,7 @@ void newCommand(String command){
     MatchState ms;      // Create match state instance.
     
     // Convert string to char* for ms.Match()
-    int length = str.length() + 1;
+    int length = str.length() + 1;  // Place NULL in last slot.
     char buff[length];
     str.toCharArray(buff, length);
     
@@ -206,12 +207,18 @@ void newCommand(String command){
       {
         digitalWrite(green, HIGH);
       }
+      // Turn both lights off.
+      else if (ms.Match("both", 0) == REGEXP_MATCHED)
+      {
+        digitalWrite(red, HIGH);
+        digitalWrite(green, HIGH);
+      }
     }
     
     //Compare the last command received by the Arduino Voice Recognition Shield with the command "OFF"
     else if(ms.Match("off", 0) == REGEXP_MATCHED)
     {
-      //Then turn the light on
+      //Then turn the light off
       if (ms.Match("red", 0) == REGEXP_MATCHED)
       {
         digitalWrite(red, LOW);
@@ -220,24 +227,13 @@ void newCommand(String command){
       {
         digitalWrite(green, LOW);
       }
-    }    
-    
-    // Turn both lights ON/OFF
-    else if(ms.Match("both", 0) == REGEXP_MATCHED)
-    {
-      if (ms.Match("on", 0) == REGEXP_MATCHED)
+      // Turn both lights off
+      else if (ms.Match("both", 0) == REGEXP_MATCHED)
       {
-        //Then turn the lights on
-        digitalWrite(green, HIGH);
-        digitalWrite(red, HIGH);
-      }
-      else if(ms.Match("off", 0) == REGEXP_MATCHED)
-      {
-        //Then turn the lights on
+        digitalWrite(red, LOW);
         digitalWrite(green, LOW);
-        digitalWrite(red, LOW);        
       }
-    }    
+    }     
     
     // Commands for Temperature.
     else if (ms.Match("temperature", 0) == REGEXP_MATCHED)
