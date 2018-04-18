@@ -12,6 +12,8 @@
     - Winston Moh Tangongho
 */
 //_______________________________________________________________________________________________________________
+// Regular Expressions library.
+#include <Regexp.h>
 
 // Set up LCD KEYPAD SHIELD
 #include <LiquidCrystal.h>
@@ -46,9 +48,6 @@ int sensorPin = 1; //the analog pin the TMP36's Vout (sense) pin is connected to
                         //500 mV offset to allow for negative temperatures
                         //Use pin A1 since pin A0 is conected to buttons on LCD Keypad Shield.
 
-// Regular Expressions library.
-#include <Regexp.h>
-
 //Including 1Sheeld library.
 #include <OneSheeld.h>
 
@@ -64,11 +63,21 @@ int red = 13;
 int green = 12; 
 //______________________________________________________________________________________________________________
 
+/* Speaker pin
+#include "SD.h"
+#define SD_ChipSelectPin 3  // CS PIN
+#include "TMRpcm.h"
+#include "SPI.h"
 
+// Create object of class TMRpcm
+TMRpcm tmrpcm;
+*/
+
+//______________________________________________________________________________________________________________
 
 void setup() {
   
-   //Serial.begin(115200);  //Start the serial connection with the computer
+   Serial.begin(115200);  //Start the serial connection with the computer
                        //to view the result open the serial monitor 
    // put your setup code here, to run once:
    rtc.begin();                    // start rtc module.
@@ -90,6 +99,9 @@ void setup() {
    //Set the LED pins to be an Output.
    pinMode(red,OUTPUT);
    pinMode(green,OUTPUT);
+   
+   // Speaker pin.
+   //tmrpcm.speakerPin = 1;
    
 }
 
@@ -279,12 +291,25 @@ void newCommand(String command){
        lcd.setCursor(0,1);
        lcd.print("Date: ");
        String _date = rtc.getDateStr();
-       String day = _date.substring(0,2);
-       String month = _date.substring(3,5);
+       String _day = _date.substring(0,2);
+       String _month = _date.substring(3,5);
        String _year = _date.substring(6,10);
-       lcd.print(month + "." + day + "." + _year);  // print in US format.
+       lcd.print(_month + "." + _day + "." + _year);  // print in US format.
        delay(1000); 
      }  
-  }
+    }
+    
+    // Play music
+    /*else if (ms.Match("music", 0) == REGEXP_MATCHED)
+    {
+        if (!SD.begin(SD_ChipSelectPin)) 
+        {
+            Serial.println("SD fail");
+            return;
+        }
+        tmrpcm.setVolume(6);
+        tmrpcm.play("music.wav");
+    }
+    */
 }
 
