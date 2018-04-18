@@ -187,7 +187,13 @@ void newCommand(String command){
     lcd.print(str);
     
     MatchState ms;      // Create match state instance.
-    ms.Target (str);    // What to search.
+    
+    // Convert string to char* for ms.Match()
+    int length = str.length() + 1;
+    char buff[length];
+    str.toCharArray(buff, length);
+    
+    ms.Target (buff);    // What to search.
     //Compare the last command received by the Arduino Voice Recognition Shield with the command "ON"
     if(ms.Match("on", 0) == REGEXP_MATCHED)
     {
@@ -196,7 +202,7 @@ void newCommand(String command){
       {
         digitalWrite(red, HIGH);
       }
-      else if(ms.Match("green", 0) == REGEXP_MATCED && !(ms.Match("both", 0) == REGEXP_MATCHED))
+      else if(ms.Match("green", 0) == REGEXP_MATCHED && !(ms.Match("both", 0) == REGEXP_MATCHED))
       {
         digitalWrite(green, HIGH);
       }
@@ -210,7 +216,7 @@ void newCommand(String command){
       {
         digitalWrite(red, LOW);
       }
-      else if(ms.Match("green", 0) == REGEXP_MATCED)
+      else if(ms.Match("green", 0) == REGEXP_MATCHED)
       {
         digitalWrite(green, LOW);
       }
