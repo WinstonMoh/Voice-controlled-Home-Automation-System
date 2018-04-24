@@ -3,7 +3,8 @@
   TITLE: Voice-controlled Home Automation System via Bluetooth. (VC-HAUS)
         - Turn on/off lights and other Electrical appliances with help of relay module.
         - Display Time and Temperature 
-        - Play Music*****
+        - Play Music
+        - Alarm owner in case of extermely high temperatures.
   Components: 1SHEELD+, Arduino, LightBulbs, Resistors,4 module Relay, Switches, 1sheeld APP for smartphone, TMP 36.
   Minnesota State University, Mankato
   Department of Electrical and Computer Engineering Technology
@@ -52,8 +53,16 @@ int sensorPin = 1; //the analog pin the TMP36's Vout (sense) pin is connected to
 #include <OneSheeld.h>
 
 // Include RTC Clock library.
+// Arduino Mega:
+// ----------------------
+// DS3231:  SDA pin   -> Arduino Digital 20 (SDA) or the dedicated SDA pin
+//          SCL pin   -> Arduino Digital 21 (SCL) or the dedicated SCL pin
+// Arduino Uno/2009:
+// ----------------------
+// DS3231:  SDA pin   -> Arduino Analog 4 or the dedicated SDA pin
+//          SCL pin   -> Arduino Analog 5 or the dedicated SCL pin
 #include <DS3231.h>
-DS3231  rtc(SDA, SCL);  // SDA - A4 and SCL - A5 on Arduino Uno.
+DS3231  rtc(SDA, SCL);  //
 
 //______________________________________________________________________________________________________________
 
@@ -63,15 +72,15 @@ int red = 13;
 int green = 12; 
 //______________________________________________________________________________________________________________
 
-/* Speaker pin
+// Speaker pin
 #include "SD.h"
-#define SD_ChipSelectPin 3  // CS PIN
+#define SD_ChipSelectPin 53  // CS PIN
 #include "TMRpcm.h"
 #include "SPI.h"
 
 // Create object of class TMRpcm
 TMRpcm tmrpcm;
-*/
+
 
 //______________________________________________________________________________________________________________
 
@@ -84,9 +93,16 @@ void setup() {
    
    lcd.begin(16, 2);               // start the library
    lcd.setCursor(0,0);             // set the LCD cursor   position 
-   lcd.print("Welcome to VC-HAUS");  // print a simple message on the LCD
+   lcd.print(F("Welcome to VC-HAUS"));  // print a simple message on the LCD
    lcd.setCursor(0,1);
-   lcd.print("Push Select Button to Start");
+   lcd.print(F("Push Select Button to Start"));
+   
+   //Set the LED pins to be an Output.
+   pinMode(red,OUTPUT);
+   pinMode(green,OUTPUT);
+   
+   // Speaker pin.
+   tmrpcm.speakerPin = 11;
    
    /* Start Communication. */
    OneSheeld.begin();
@@ -96,16 +112,28 @@ void setup() {
    //It's called each time a new command is recognized by the phone
    VoiceRecognition.setOnNewCommand(newCommand);   
    
-   //Set the LED pins to be an Output.
-   pinMode(red,OUTPUT);
-   pinMode(green,OUTPUT);
    
-   // Speaker pin.
-   //tmrpcm.speakerPin = 1;
-   
-}
+} // setup()
 
 void loop(){   
+  
+   // Critical condition for very hight temperatures - indicating a FIRE for example.
+   float thresholdTemp = 40.0;  // in degreesC
+   if (getTemperature() > thresholdTemp)
+   {
+     while (1)
+     {
+      /*Tone needs 2 arguments, but can take three
+        1) Pin#
+        2) Frequency - this is in hertz (cycles per second) which determines the pitch of the noise made
+        3) Duration - how long teh tone plays
+      */
+      tone(tmrpcm.speakerPin, 1000, 500);
+      if (getTemperature() <= thresholdTemp)
+          break;
+     }
+   }
+   
    lcd_key = read_LCD_buttons();   // read the buttons
  
    switch (lcd_key){               // depending on which button was pushed, we perform an action
@@ -130,7 +158,7 @@ void loop(){
              if (!started){
              lcd.clear();
              lcd.setCursor(0,0);
-             lcd.print("Listening...");  //  push button "SELECT" and show the word on the screen
+             lcd.print(F("Listening..."));  //  push button "SELECT" and show the word on the screen
              VoiceRecognition.start();
              started = true;}
              break;
@@ -141,22 +169,22 @@ void loop(){
              break;
        }
    }
-}
+} // loop()
 
 void error(byte errorData)
 {
   /* Switch on error and print it on the terminal. */
   switch(errorData)
   {
-    case NETWORK_TIMEOUT_ERROR: lcd.setCursor(0,1);lcd.print("Network timeout");break;
-    case NETWORK_ERROR: lcd.setCursor(0,1);lcd.print("Network Error");break;
-    case AUDIO_ERROR: lcd.setCursor(0,1);lcd.print("Audio error");break;
-    case SERVER_ERROR: lcd.setCursor(0,1);lcd.print("No Server");break;
-    case SPEECH_TIMEOUT_ERROR: lcd.setCursor(0,1);lcd.print("Speech timeout");break;
-    case NO_MATCH_ERROR: lcd.setCursor(0,1);lcd.print("No match");break;
-    case RECOGNIZER_BUSY_ERROR: lcd.setCursor(0,1);lcd.print("Busy");break;
+    case NETWORK_TIMEOUT_ERROR: lcd.setCursor(0,1);lcd.print(F("Network timeout"));break;
+    case NETWORK_ERROR: lcd.setCursor(0,1);lcd.print(F("Network Error"));break;
+    case AUDIO_ERROR: lcd.setCursor(0,1);lcd.print(F("Audio error"));break;
+    case SERVER_ERROR: lcd.setCursor(0,1);lcd.print(F("No Server"));break;
+    case SPEECH_TIMEOUT_ERROR: lcd.setCursor(0,1);lcd.print(F("Speech timeout"));break;
+    case NO_MATCH_ERROR: lcd.setCursor(0,1);lcd.print(F("No match"));break;
+    case RECOGNIZER_BUSY_ERROR: lcd.setCursor(0,1);lcd.print(F("Busy"));break;
   }
-}
+} // error()
 
 int read_LCD_buttons(){// read the buttons
     
@@ -185,17 +213,33 @@ int read_LCD_buttons(){// read the buttons
    
 
     return btnNONE;  // when all others fail, return this.
-}
+} // read_LCD_buttons()
+
+// Get temperature from sensor in degree celcius
+float getTemperature()
+{
+     //getting the voltage reading from the temperature sensor
+     int reading = analogRead(sensorPin);  
+     
+     // converting that reading to voltage, for 3.3v arduino use 3.3
+     float voltage = reading * 5.0;
+     voltage /= 1024.0; 
+     
+     // now print out the temperature
+     float temperature = (voltage - 0.5) * 100 ;  //converting from 10 mv per degree wit 500 mV offset
+                                                   //to degrees ((voltage - 500mV) times 100)
+     return temperature;
+} //getTemperature()
 
 void newCommand(String command){
     //Clear the text on the LCD Screen
     lcd.clear();
     lcd.setCursor(0,0);// set the LCD cursor position 
-    lcd.print("You said");
+    lcd.print(F("You said"));
     lcd.setCursor(0,1);
     
     String str = VoiceRecognition.getLastCommand();    // variable to hold voice comand string.
-    Serial.print(str);                      // Print in serial monitor for debugging purposes.
+    //Serial.print(str);                      // Print in serial monitor for debugging purposes. Use F macro to save memory.
     //print last command received
     lcd.print(str);
     
@@ -220,7 +264,7 @@ void newCommand(String command){
         digitalWrite(green, HIGH);
       }
       // Turn both lights off.
-      else if (ms.Match("both", 0) == REGEXP_MATCHED)
+      else if (ms.Match("both", 0) == REGEXP_MATCHED || ms.Match("all", 0) == REGEXP_MATCHED)
       {
         digitalWrite(red, HIGH);
         digitalWrite(green, HIGH);
@@ -240,7 +284,7 @@ void newCommand(String command){
         digitalWrite(green, LOW);
       }
       // Turn both lights off
-      else if (ms.Match("both", 0) == REGEXP_MATCHED)
+      else if (ms.Match("both", 0) == REGEXP_MATCHED || ms.Match("all", 0) == REGEXP_MATCHED)
       {
         digitalWrite(red, LOW);
         digitalWrite(green, LOW);
@@ -250,28 +294,19 @@ void newCommand(String command){
     // Commands for Temperature.
     else if (ms.Match("temperature", 0) == REGEXP_MATCHED)
     {
-     //getting the voltage reading from the temperature sensor
-     int reading = analogRead(sensorPin);  
-     
-     // converting that reading to voltage, for 3.3v arduino use 3.3
-     float voltage = reading * 5.0;
-     voltage /= 1024.0; 
-     
-     // now print out the temperature
-     float temperatureC = (voltage - 0.5) * 100 ;  //converting from 10 mv per degree wit 500 mV offset
-                                                   //to degrees ((voltage - 500mV) times 100)
+     float temperatureC = getTemperature();  // get Temperature in degreesC.                                           
      // now convert to Fahrenheit
      float temperatureF = (temperatureC * 9.0 / 5.0) + 32.0;                                                  
      
      // Print out Temperature on LCD Keypad Shield.
      lcd.clear();
      lcd.setCursor(0,0);  // set the LCD cursor position to line 0
-     lcd.print("Temp in C: ");
+     lcd.print(F("Temp in C: "));
      lcd.setCursor(11,0);
      lcd.print(temperatureC);
      
      lcd.setCursor(0,1);// set the LCD cursor position to next line
-     lcd.print("Temp in F: ");
+     lcd.print(F("Temp in F: "));
      lcd.setCursor(11,1); 
      lcd.print(temperatureF);       
       
@@ -285,11 +320,12 @@ void newCommand(String command){
      {   
        lcd.clear();
        lcd.setCursor(0,0);
-       lcd.print("Time:  ");
+       lcd.print(F("Time:  "));
+       
        lcd.print(rtc.getTimeStr());
        
        lcd.setCursor(0,1);
-       lcd.print("Date: ");
+       lcd.print(F("Date: "));
        String _date = rtc.getDateStr();
        String _day = _date.substring(0,2);
        String _month = _date.substring(3,5);
@@ -300,16 +336,16 @@ void newCommand(String command){
     }
     
     // Play music
-    /*else if (ms.Match("music", 0) == REGEXP_MATCHED)
+    else if (ms.Match("music", 0) == REGEXP_MATCHED)
     {
         if (!SD.begin(SD_ChipSelectPin)) 
         {
-            Serial.println("SD fail");
+            Serial.println(F("SD fail"));
             return;
         }
         tmrpcm.setVolume(6);
         tmrpcm.play("music.wav");
     }
-    */
-}
+    
+}// newCommand()
 
