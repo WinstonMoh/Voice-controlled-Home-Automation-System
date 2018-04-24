@@ -14,11 +14,11 @@ There are many companies which are innovating to Home Autonomous Systems. But cu
 # Set-up
 - Download and Install Arduino IDE(Latest version) from https://www.arduino.cc/en/Main/Software.
 - Buy Arduino MEGA board from https://store.arduino.cc/usa/arduino/most-popular. ATMega2560 was used because the SD card library consumed almost all of the SRAM and caused stability issues. The MEGA was used because it carries 8KB of SRAM which is suitable for our purposes.
-## Analysis:
+- Connect Arduino and other components accordingly, compile and upload your code and start using the product.
+*Analysis:*
 <u>Arduino MEGA </u>: Global variables use 2,095 bytes (25%) of dynamic memory, leaving 6,097 bytes for local variables. Maximum is 8,192 bytes. </br>
 <u>Arduino UNO </u>: Global variables use 1,656 bytes (80%) of dynamic memory, leaving 384 bytes for local variables. Maximum is 2,048 bytes.
 Hence, we went with the Arduino MEGA. 
-- Connect Arduino and other components accordingly, compile and upload your code and start using the product.
 
 # Summary
 ## A) Functions
