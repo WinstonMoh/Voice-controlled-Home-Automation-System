@@ -14,18 +14,22 @@ There are many companies which are innovating to Home Autonomous Systems. But cu
 # Set-up
 - Download and Install Arduino IDE(Latest version) from https://www.arduino.cc/en/Main/Software.
 - Buy Arduino MEGA board from https://store.arduino.cc/usa/arduino/most-popular. ATMega2560 was used because the SD card library consumed almost all of the SRAM and caused stability issues. The MEGA was used because it carries 8KB of SRAM which is suitable for our purposes.
-## Analysis:
-<u>Arduino MEGA </u>: Global variables use 2,095 bytes (25%) of dynamic memory, leaving 6,097 bytes for local variables. Maximum is 8,192 bytes.
-<u>Arduino UNO </u>: Global variables use 1,656 bytes (80%) of dynamic memory, leaving 384 bytes for local variables. Maximum is 2,048 bytes.
-Hence, we went with the Arduino MEGA. 
 - Connect Arduino and other components accordingly, compile and upload your code and start using the product.
+*Analysis:* </br>
+<u>Arduino MEGA </u>: Global variables use 2,095 bytes (25%) of dynamic memory, leaving 6,097 bytes for local variables. Maximum is 8,192 bytes. </br>
+<u>Arduino UNO </u>: Global variables use 1,656 bytes (80%) of dynamic memory, leaving 384 bytes for local variables. Maximum is 2,048 bytes. </br>
+Hence, we went with the Arduino MEGA. 
 
 # Summary
 ## A) Functions
 1.	Design a cheap and portable Home Automation System with Voice-recognition which works with new technology known as a 1SHEELD+ Device.
 2.	Receives input from User in the form of Voice commands such as “Turn off x...” or “Turn off y...” and much more. Voice commands are converted from sound to text using 1SHEELD+ application in mobile phone and transmits the converted text via Bluetooth to our arduino Board which then loads the text into the program code and performs the required action. </br> 
 Regular expressions were used to match the voice commands with the expected commands. This reduced the amount of work on the user's end to replicate exact strings. for example. "Turn off red light", "... turn off the red light ..." and "Red light off" all work in the same way to turn off the red light.
-3.	Output of Device is seen in the turning on and off of LEDs or other appliances.
+3. Final outputs include: </br>
+ - Turning Ligths ON/OFF.
+ - Displaying room temperatures in celcius and Fahrenheit.
+ - Displaying time in 24h format with current Date.
+ - Alarm system for very high temperatures. Uses TMP36 to detect high temperatures but a smoke detector could be used in place of it.
 4.	Display received commands with other information on the LCD screen.
  
 
