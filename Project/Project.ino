@@ -343,6 +343,11 @@ void newCommand(String command){
             Serial.println(F("SD fail"));
             return;
         }
+        /*if (ms.Match("stop", 0) == REGEXP_MATCHED || ms.Match("end", 0) == REGEXP_MATCHED)
+        {
+          break;
+        }
+        */
         tmrpcm.setVolume(6);
         tmrpcm.play("music.wav");
     }
